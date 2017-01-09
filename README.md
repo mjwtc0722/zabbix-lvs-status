@@ -27,3 +27,14 @@ Shutting down Zabbix agent:                                [  OK  ]
 Starting Zabbix agent:                                     [  OK  ]
 ```
 * 在zabbix web导入模板zbx_lvs_templates.xml并关联主机
+
+## 监控项说明
+```
+ActiveConn     #活动连接数
+InActConn      #非活动连接数
+CPS            #每秒连接数
+InPPS          #每秒的入包个数
+OutPPS         #每秒的出包个数
+InBPS          #每秒入流量
+OutBPS         #每秒出流量
+```
