@@ -1,24 +1,23 @@
 #!/bin/bash
 #
-SVC_FLG=1
-END_FLG=0
 IFS=$'\n'
+TOTAL_LINES=$(sudo /sbin/ipvsadm -Ln |sed -n '4,$p' |awk '{print $1" "$2}' |wc -l)
+LINE_NUM=0
 
-echo '{ "data" : ['
-for LINE in `sudo /sbin/ipvsadm -Ln`
+printf '{ "data" : [\n'
+for LINE in $(sudo /sbin/ipvsadm -Ln |sed -n '4,$p' |awk '{print $1" "$2}')
 do
-    PROTOCOL_INFO=`echo ${LINE} | awk '{print $1}'`
-    IP_INFO=`echo ${LINE} | awk '{print $2}'`
-    if [ ${END_FLG} != 0 ] ; then
-        echo ", "
+    LINE_NUM=$(( $LINE_NUM + 1 ))
+    if [ $(echo ${LINE} | awk '{print $1}') = "TCP" -o $(echo ${LINE} | awk '{print $1}') = "UDP" ];then
+        PROTOCOL=$(echo ${LINE} | awk '{print $1}')
+        VIP=$(echo ${LINE} | awk '{print $2}')
     fi
-    if [ "${PROTOCOL_INFO}" = "TCP" -o "${PROTOCOL_INFO}" = "UDP" ] ; then
-        VIP=${IP_INFO}
-        PROTOCOL=${PROTOCOL_INFO}
-        SVC_FLG=0
-    elif [ "${PROTOCOL_INFO}" = "->" -a ${SVC_FLG} = 0 ] ; then
-        echo -n "{ \"{#PROTOCOL}\" : \"${PROTOCOL}\", \"{#VIP}\" : \"${VIP}\", \"{#RIP}\" : \"${IP_INFO}\" }"
-        END_FLG=1
+    if [ $(echo ${LINE} | awk '{print $1}') = "->" ];then
+        RIP=$(echo ${LINE} | awk '{print $2}')
+        printf "{ \"{#PROTOCOL}\" : \"${PROTOCOL}\", \"{#VIP}\" : \"${VIP}\", \"{#RIP}\" : \"${RIP}\" }"
+        if [ $LINE_NUM != $TOTAL_LINES ];then
+            printf ", \n"
+        fi
     fi
 done
-echo " ] }"
+printf " ] }\n"
